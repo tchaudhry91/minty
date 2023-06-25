@@ -19,7 +19,6 @@ const Lexer = struct {
     }
 
     pub fn nextToken(self: *Lexer) tokens.Token {
-        defer self.readChar();
         self.skipWhitespace();
         var token_type: Types = switch (self.ch) {
             '=' => Types.ASSIGN,
@@ -45,7 +44,9 @@ const Lexer = struct {
                 }
             },
         };
+        // Reach here on single char tokens
         const token = tokens.Token.New(token_type, &[_]u8{self.ch});
+        self.readChar();
         return token;
     }
 
@@ -141,10 +142,12 @@ test "src_parse" {
         Types.IDENT,
         Types.ASSIGN,
         Types.INT,
+        Types.SEMICOLON,
         Types.LET,
         Types.IDENT,
         Types.ASSIGN,
         Types.INT,
+        Types.SEMICOLON,
         Types.LET,
         Types.IDENT,
         Types.ASSIGN,
@@ -178,10 +181,12 @@ test "src_parse" {
         "five",
         "=",
         "5",
+        ";",
         "let",
         "ten",
         "=",
         "10",
+        ";",
         "let",
         "add",
         "=",
@@ -208,7 +213,7 @@ test "src_parse" {
         "ten",
         ")",
         ";",
-        "0",
+        &[_]u8{0},
     };
     var lex = Lexer.init(input);
 
