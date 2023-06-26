@@ -1,0 +1,32 @@
+// This is a Toy Project. I'm not expecting any real use out of this. The purpose is to learn Zig. 
+// Following along from "How to write an interpretter in Go" by Thorsten Ball.
+
+// Some thoughts behind the language
+
+// Plan is to write a language to write ops scripts in with easy custom re-usable components.
+
+
+1. Allow Zig style imports
+lib = @import("std");
+third_party = @import("github.com/tchaudhry91/somelib");
+
+2. Allow interoperable libs? (e.g pip compat?)
+Another idea is to allow CLI tools and work Bash style.
+
+e.g 
+curl = @import("system/curl");
+stdout, stderr, rc = curl.spawn("https://google.com");
+
+^ Probably better
+
+3. Autogenerate Nix/Docker "executable" scripts.
+-> This will require some thought going forward.
+-> Ideally, we "spin-up" environments for the plugin to run in via Nix.
+
+4. Environment Vars
+env = @import("env");
+? Not sure about this.
+
+
+1st Goal:
+Write a "script" that achieves something useful.
