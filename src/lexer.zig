@@ -2,7 +2,7 @@ const std = @import("std");
 const tokens = @import("./tokens.zig");
 const Types = tokens.TokenType;
 
-const Lexer = struct {
+pub const Lexer = struct {
     input: []const u8,
     position: usize = 0,
     read_position: usize = 0,
@@ -29,29 +29,7 @@ const Lexer = struct {
     pub fn nextToken(self: *Lexer) tokens.Token {
         self.skipWhitespace();
         var token_type: Types = switch (self.ch) {
-            '=' => {
-                if (self.peekChar() == '=') {
-                    // Double read because we return the token here
-                    self.readChar();
-                    self.readChar();
-                    return tokens.Token.New(Types.EQ, "==");
-                } else {
-                    self.readChar();
-                    return tokens.Token.New(Types.ASSIGN, "=");
-                }
-            },
             '-' => Types.MINUS,
-            '!' => {
-                if (self.peekChar() == '=') {
-                    // Double read because we return the token here
-                    self.readChar();
-                    self.readChar();
-                    return tokens.Token.New(Types.NOT_EQ, "!=");
-                } else {
-                    self.readChar();
-                    return tokens.Token.New(Types.BANG, "!");
-                }
-            },
             '/' => Types.SLASH,
             '<' => Types.LT,
             '>' => Types.GT,
@@ -63,6 +41,28 @@ const Lexer = struct {
             '+' => Types.PLUS,
             '{' => Types.LBRACE,
             '}' => Types.RBRACE,
+            '=' => {
+                if (self.peekChar() == '=') {
+                    // Double read because we return the token here
+                    self.readChar();
+                    self.readChar();
+                    return tokens.Token.New(Types.EQ, "==");
+                } else {
+                    self.readChar();
+                    return tokens.Token.New(Types.ASSIGN, "=");
+                }
+            },
+            '!' => {
+                if (self.peekChar() == '=') {
+                    // Double read because we return the token here
+                    self.readChar();
+                    self.readChar();
+                    return tokens.Token.New(Types.NOT_EQ, "!=");
+                } else {
+                    self.readChar();
+                    return tokens.Token.New(Types.BANG, "!");
+                }
+            },
             0 => Types.EOF,
             else => {
                 if (self.isAllowedLetter()) {
@@ -127,30 +127,32 @@ const Lexer = struct {
 // Tests
 
 test "token_parse" {
-    const input: []const u8 = "=+(){},;%";
+    const input: []const u8 = "=+()   \n {==},;%";
     const expected_tokens = [_]Types{
         Types.ASSIGN,
         Types.PLUS,
         Types.LPAREN,
         Types.RPAREN,
         Types.LBRACE,
+        Types.EQ,
         Types.RBRACE,
         Types.COMMA,
         Types.SEMICOLON,
         Types.ILLEGAL,
         Types.EOF,
     };
-    const literals = [_]u8{
-        '=',
-        '+',
-        '(',
-        ')',
-        '{',
-        '}',
-        ',',
-        ';',
-        '%',
-        0,
+    const literals = [_][]const u8{
+        "=",
+        "+",
+        "(",
+        ")",
+        "{",
+        "==",
+        "}",
+        ",",
+        ";",
+        "%",
+        &[1]u8{0},
     };
     var lex = Lexer.init(input);
 
@@ -158,14 +160,15 @@ test "token_parse" {
     for (expected_tokens, 0..) |expected_token, i| {
         tok = lex.nextToken();
         try std.testing.expectEqual(expected_token, tok.type);
-        try std.testing.expectEqual(literals[i], tok.literal[0]);
+        try std.testing.expectEqualSlices(u8, literals[i], tok.literal);
     }
 }
 
 test "src_parse" {
     const input: []const u8 =
+        \\ 5;
         \\ let five = 5!
-        \\ let ten = 10;
+        \\ let ten = 10 < 5;
         \\ let add = fn(x, y) {
         \\     x + y;
         \\ };
@@ -182,6 +185,8 @@ test "src_parse" {
     ;
 
     const expected_tokens = [_]Types{
+        Types.INT,
+        Types.SEMICOLON,
         Types.LET,
         Types.IDENT,
         Types.ASSIGN,
@@ -190,6 +195,8 @@ test "src_parse" {
         Types.LET,
         Types.IDENT,
         Types.ASSIGN,
+        Types.INT,
+        Types.LT,
         Types.INT,
         Types.SEMICOLON,
         Types.LET,
@@ -256,6 +263,8 @@ test "src_parse" {
         Types.EOF,
     };
     const literals = [_][]const u8{
+        "5",
+        ";",
         "let",
         "five",
         "=",
@@ -265,6 +274,8 @@ test "src_parse" {
         "ten",
         "=",
         "10",
+        "<",
+        "5",
         ";",
         "let",
         "add",
@@ -334,7 +345,6 @@ test "src_parse" {
     var tok: tokens.Token = undefined;
     for (expected_tokens, 0..) |expected_token, i| {
         tok = lex.nextToken();
-        std.debug.print("Token Type {any} Literal {s}\n", .{ tok.type, tok.literal });
         try std.testing.expectEqual(expected_token, tok.type);
         try std.testing.expectEqualSlices(u8, literals[i], tok.literal);
     }

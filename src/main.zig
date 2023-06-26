@@ -1,3 +1,9 @@
 const std = @import("std");
 
-pub fn main() !void {}
+const repl = @import("./repl.zig");
+
+pub fn main() !void {
+    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
+    var allocator = gpa.allocator();
+    try repl.Start(allocator);
+}

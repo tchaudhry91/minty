@@ -42,7 +42,6 @@ pub const Token = struct {
     literal: []const u8,
 
     pub fn New(token_type: TokenType, literal: []const u8) Token {
-        std.debug.print("Literal: {s}\n", .{literal});
         return Token{
             .type = token_type,
             .literal = literal,
