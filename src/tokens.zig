@@ -10,6 +10,14 @@ pub const TokenType = enum {
     // Operators
     ASSIGN,
     PLUS,
+    MINUS,
+    BANG,
+    ASTERISK,
+    SLASH,
+    LT,
+    GT,
+    EQ,
+    NOT_EQ,
 
     // Delims
     COMMA,
@@ -22,13 +30,19 @@ pub const TokenType = enum {
     // Keywords
     FUNCTION,
     LET,
+    TRUE,
+    FALSE,
+    IF,
+    ELSE,
+    RETURN,
 };
 
 pub const Token = struct {
     type: TokenType,
-    literal: ?[]const u8,
+    literal: []const u8,
 
     pub fn New(token_type: TokenType, literal: []const u8) Token {
+        std.debug.print("Literal: {s}\n", .{literal});
         return Token{
             .type = token_type,
             .literal = literal,
@@ -43,6 +57,16 @@ pub fn lookupIdentifierType(literal: []const u8) TokenType {
         return TokenType.FUNCTION;
     } else if (std.mem.eql(u8, literal, "let")) {
         return TokenType.LET;
+    } else if (std.mem.eql(u8, literal, "true")) {
+        return TokenType.TRUE;
+    } else if (std.mem.eql(u8, literal, "false")) {
+        return TokenType.FALSE;
+    } else if (std.mem.eql(u8, literal, "if")) {
+        return TokenType.IF;
+    } else if (std.mem.eql(u8, literal, "else")) {
+        return TokenType.ELSE;
+    } else if (std.mem.eql(u8, literal, "return")) {
+        return TokenType.RETURN;
     } else {
         return TokenType.IDENT;
     }
