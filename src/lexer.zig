@@ -28,19 +28,55 @@ pub const Lexer = struct {
 
     pub fn nextToken(self: *Lexer) tokens.Token {
         self.skipWhitespace();
-        var token_type: Types = switch (self.ch) {
-            '-' => Types.MINUS,
-            '/' => Types.SLASH,
-            '<' => Types.LT,
-            '>' => Types.GT,
-            '*' => Types.ASTERISK,
-            ';' => Types.SEMICOLON,
-            '(' => Types.LPAREN,
-            ')' => Types.RPAREN,
-            ',' => Types.COMMA,
-            '+' => Types.PLUS,
-            '{' => Types.LBRACE,
-            '}' => Types.RBRACE,
+        switch (self.ch) {
+            '-' => {
+                defer self.readChar();
+                return tokens.Token.New(Types.MINUS, "-");
+            },
+            '/' => {
+                defer self.readChar();
+                return tokens.Token.New(Types.SLASH, "/");
+            },
+            '<' => {
+                defer self.readChar();
+                return tokens.Token.New(Types.LT, "<");
+            },
+            '>' => {
+                defer self.readChar();
+                return tokens.Token.New(Types.GT, ">");
+            },
+            '*' => {
+                defer self.readChar();
+                return tokens.Token.New(Types.ASTERISK, "*");
+            },
+            ';' => {
+                defer self.readChar();
+                return tokens.Token.New(Types.SEMICOLON, ";");
+            },
+            '(' => {
+                defer self.readChar();
+                return tokens.Token.New(Types.LPAREN, "(");
+            },
+            ')' => {
+                defer self.readChar();
+                return tokens.Token.New(Types.RPAREN, ")");
+            },
+            ',' => {
+                defer self.readChar();
+                return tokens.Token.New(Types.COMMA, ",");
+            },
+            '+' => {
+                defer self.readChar();
+                return tokens.Token.New(Types.PLUS, "+");
+            },
+            '{' => {
+                defer self.readChar();
+                return tokens.Token.New(Types.LBRACE, "{");
+            },
+            '}' => {
+                defer self.readChar();
+                return tokens.Token.New(Types.RBRACE, "}");
+            },
             '=' => {
                 if (self.peekChar() == '=') {
                     // Double read because we return the token here
@@ -63,7 +99,9 @@ pub const Lexer = struct {
                     return tokens.Token.New(Types.BANG, "!");
                 }
             },
-            0 => Types.EOF,
+            0 => {
+                return tokens.Token.New(Types.EOF, &[1]u8{0});
+            },
             else => {
                 if (self.isAllowedLetter()) {
                     const literal = self.readIdentifier();
@@ -77,10 +115,7 @@ pub const Lexer = struct {
                     return tokens.Token.New(Types.ILLEGAL, &[1]u8{self.ch});
                 }
             },
-        };
-        // Reach here on single char tokens
-        defer self.readChar();
-        return tokens.Token.New(token_type, &[1]u8{self.ch});
+        }
     }
 
     fn readIdentifier(self: *Lexer) []const u8 {
@@ -166,7 +201,7 @@ test "token_parse" {
 
 test "src_parse" {
     const input: []const u8 =
-        \\ 5;
+        \\ <5;
         \\ let five = 5!
         \\ let ten = 10 < 5;
         \\ let add = fn(x, y) {
@@ -185,6 +220,7 @@ test "src_parse" {
     ;
 
     const expected_tokens = [_]Types{
+        Types.LT,
         Types.INT,
         Types.SEMICOLON,
         Types.LET,
@@ -263,6 +299,7 @@ test "src_parse" {
         Types.EOF,
     };
     const literals = [_][]const u8{
+        "<",
         "5",
         ";",
         "let",
@@ -345,6 +382,7 @@ test "src_parse" {
     var tok: tokens.Token = undefined;
     for (expected_tokens, 0..) |expected_token, i| {
         tok = lex.nextToken();
+        // std.debug.print("Type: {any} Literal: {s}\n", .{ tok.type, tok.literal });
         try std.testing.expectEqual(expected_token, tok.type);
         try std.testing.expectEqualSlices(u8, literals[i], tok.literal);
     }
