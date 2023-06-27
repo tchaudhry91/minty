@@ -41,6 +41,16 @@ pub const Token = struct {
     type: TokenType,
     literal: []const u8,
 
+    const keywordMap = std.ComptimeStringMap(TokenType, .{
+        .{ "fn", .FUNCTION },
+        .{ "let", .LET },
+        .{ "true", .TRUE },
+        .{ "false", .FALSE },
+        .{ "if", .IF },
+        .{ "else", .ELSE },
+        .{ "return", .RETURN },
+    });
+
     pub fn New(token_type: TokenType, literal: []const u8) Token {
         return Token{
             .type = token_type,
@@ -49,24 +59,16 @@ pub const Token = struct {
     }
 };
 
+const keywordMap = std.ComptimeStringMap(TokenType, .{
+    .{ "fn", .FUNCTION },
+    .{ "let", .LET },
+    .{ "true", .TRUE },
+    .{ "false", .FALSE },
+    .{ "if", .IF },
+    .{ "else", .ELSE },
+    .{ "return", .RETURN },
+});
+
 pub fn lookupIdentifierType(literal: []const u8) TokenType {
-    // Since there is no switch on strings, we have to do this manually.
-    // to-do: Look for a better method later.
-    if (std.mem.eql(u8, literal, "fn")) {
-        return TokenType.FUNCTION;
-    } else if (std.mem.eql(u8, literal, "let")) {
-        return TokenType.LET;
-    } else if (std.mem.eql(u8, literal, "true")) {
-        return TokenType.TRUE;
-    } else if (std.mem.eql(u8, literal, "false")) {
-        return TokenType.FALSE;
-    } else if (std.mem.eql(u8, literal, "if")) {
-        return TokenType.IF;
-    } else if (std.mem.eql(u8, literal, "else")) {
-        return TokenType.ELSE;
-    } else if (std.mem.eql(u8, literal, "return")) {
-        return TokenType.RETURN;
-    } else {
-        return TokenType.IDENT;
-    }
+    return (keywordMap.get(literal) orelse TokenType.IDENT);
 }
