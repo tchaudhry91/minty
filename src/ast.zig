@@ -4,6 +4,7 @@ const tokens = @import("./tokens.zig");
 pub const StatementTypes = enum {
     LET,
     RETURN,
+    EXPRESSION,
 };
 
 pub const Statement = union(StatementTypes) {
@@ -11,10 +12,6 @@ pub const Statement = union(StatementTypes) {
         token: tokens.Token,
         name: Identifier = undefined,
         value: Expression = Expression{},
-
-        pub fn tokenLiteral(self: @This()) []const u8 {
-            return self.token.literal;
-        }
 
         pub fn string(self: @This(), allocator: std.mem.Allocator) ![]const u8 {
             return std.fmt.allocPrint(allocator, "{s} {s} = {!s}", .{ self.token.literal, self.name.value, self.value.string(allocator) });
@@ -24,17 +21,23 @@ pub const Statement = union(StatementTypes) {
         token: tokens.Token,
         return_value: Expression = Expression{},
 
-        pub fn tokenLiteral(self: @This()) []const u8 {
-            return self.token.literal;
-        }
         pub fn string(self: @This(), allocator: std.mem.Allocator) ![]const u8 {
             return std.fmt.allocPrint(allocator, "{s} {!s}", .{ self.token.literal, self.return_value.string(allocator) });
+        }
+    },
+    EXPRESSION: struct {
+        token: tokens.Token,
+        expression: Expression = Expression{},
+
+        pub fn string(self: @This(), allocator: std.mem.Allocator) ![]const u8 {
+            return std.fmt.allocPrint(allocator, "{!s}", .{self.expression.string(allocator)});
         }
     },
     pub fn string(self: @This(), allocator: std.mem.Allocator) ![]const u8 {
         switch (self) {
             .LET => |let_stmt| return let_stmt.string(allocator),
             .RETURN => |return_stmt| return return_stmt.string(allocator),
+            .EXPRESSION => |expression_stmt| return expression_stmt.string(allocator),
         }
     }
 };
@@ -50,6 +53,9 @@ pub const Expression = struct {
 pub const Identifier = struct {
     token: tokens.Token,
     value: []const u8,
+    pub fn string(self: Identifier) []const u8 {
+        return self.value;
+    }
 };
 
 // Program
