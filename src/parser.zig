@@ -3,11 +3,16 @@ const ast = @import("./ast.zig");
 const lex = @import("./lexer.zig");
 const tokens = @import("./tokens.zig");
 
+pub const prefixParseFn: type = fn () ?ast.Expression;
+pub const infixParseFn: type = fn (ast.Expression) ?ast.Expression;
+
 const Parser = struct {
     lexer: *lex.Lexer,
     current_token: tokens.Token,
     peek_token: tokens.Token,
     allocator: std.mem.Allocator,
+    prefixParseFns: std.EnumMap(tokens.TokenType, prefixParseFn),
+    infixParseFns: std.EnumMap(tokens.TokenType, infixParseFn),
 
     pub fn New(l: *lex.Lexer, allocator: std.mem.Allocator) Parser {
         var p: Parser = Parser{
@@ -15,6 +20,8 @@ const Parser = struct {
             .allocator = allocator,
             .current_token = l.nextToken(),
             .peek_token = l.nextToken(),
+            .prefixParseFns = std.EnumMap(tokens.TokenType, prefixParseFn),
+            .infixParseFns = std.EnumMap(tokens.TokenType, infixParseFn),
         };
         return p;
     }
@@ -99,6 +106,12 @@ const Parser = struct {
         // To-Do Expression parsing
 
         return stmt;
+    }
+
+    pub fn parseExpression(self: *Parser, precedence: ast.ExpressionOps) ?ast.Expression {
+        _ = precedence;
+        _ = self;
+        return null;
     }
 };
 

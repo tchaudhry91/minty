@@ -71,3 +71,14 @@ pub const Program = struct {
         return try out.toOwnedSlice();
     }
 };
+
+// ExpressionOps are the precedence of the operators
+pub const ExpressionOps = enum(u8) {
+    LOWEST,
+    EQUALS,
+    LESSGREATER,
+    SUM,
+    PRODUCT,
+    PREFIX,
+    CALL,
+};
