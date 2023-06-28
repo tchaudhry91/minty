@@ -382,7 +382,6 @@ test "src_parse" {
     var tok: tokens.Token = undefined;
     for (expected_tokens, 0..) |expected_token, i| {
         tok = lex.nextToken();
-        // std.debug.print("Type: {any} Literal: {s}\n", .{ tok.type, tok.literal });
         try std.testing.expectEqual(expected_token, tok.type);
         try std.testing.expectEqualSlices(u8, literals[i], tok.literal);
     }

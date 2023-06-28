@@ -40,9 +40,9 @@ const Parser = struct {
     }
 
     pub fn parseStatement(self: *Parser) ?ast.Statement {
-        std.debug.print("token: {any}\n", .{self.current_token.type});
         switch (self.current_token.type) {
             tokens.TokenType.LET => return self.parseLetStatement(),
+            tokens.TokenType.RETURN => return self.parseReturnStatement(),
             else => unreachable,
         }
     }
@@ -57,6 +57,10 @@ const Parser = struct {
     }
 
     pub fn parseLetStatement(self: *Parser) ?ast.Statement {
+        var stmt = ast.Statement{ .LET = .{
+            .token = self.current_token,
+        } };
+
         if (!self.expectPeek(tokens.TokenType.IDENT)) {
             return null;
         }
@@ -66,10 +70,7 @@ const Parser = struct {
             .value = self.current_token.literal,
         };
 
-        var stmt = ast.Statement{ .LET = .{
-            .token = self.current_token,
-            .name = ident,
-        } };
+        stmt.LET.name = ident;
 
         if (!self.expectPeek(tokens.TokenType.ASSIGN)) {
             return null;
@@ -78,17 +79,38 @@ const Parser = struct {
         while (self.current_token.type != tokens.TokenType.SEMICOLON) {
             self.nextToken();
         }
+
+        // To-Do Expression parsing
+
+        return stmt;
+    }
+
+    pub fn parseReturnStatement(self: *Parser) ?ast.Statement {
+        var stmt = ast.Statement{ .RETURN = .{
+            .token = self.current_token,
+        } };
+
+        self.nextToken();
+
+        while (self.current_token.type != tokens.TokenType.SEMICOLON) {
+            self.nextToken();
+        }
+
+        // To-Do Expression parsing
+
         return stmt;
     }
 };
 
-test "parser_let" {
-    const input = "let x = 5;";
-    var allocator = std.heap.ArenaAllocator.init(std.heap.page_allocator);
-    defer allocator.deinit();
+test "parser_let_return" {
+    const input = "let x = 5; return true;";
+    var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
+    defer arena.deinit();
+    var allocator = arena.allocator();
     var l = lex.Lexer.init(input);
-    var p = Parser.New(&l, allocator.allocator());
+    var p = Parser.New(&l, allocator);
     var program = try p.parseProgram();
-
-    std.debug.print("{any}\n", .{program.statements[0].LET});
+    std.debug.print("Let Statement: {!s}\n", .{program.statements[0].string(allocator)});
+    std.debug.print("Return Statement: {!s}\n", .{program.statements[1].string(allocator)});
+    std.debug.print("Full Program:\n{!s}\n", .{program.string(allocator)});
 }
