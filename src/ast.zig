@@ -11,7 +11,7 @@ pub const Statement = union(StatementTypes) {
     LET: struct {
         token: tokens.Token,
         name: Identifier = undefined,
-        value: Expression = Expression{},
+        value: Expression = undefined,
 
         pub fn string(self: @This(), allocator: std.mem.Allocator) ![]const u8 {
             return std.fmt.allocPrint(allocator, "{s} {s} = {!s}", .{ self.token.literal, self.name.value, self.value.string(allocator) });
@@ -19,7 +19,7 @@ pub const Statement = union(StatementTypes) {
     },
     RETURN: struct {
         token: tokens.Token,
-        return_value: Expression = Expression{},
+        return_value: Expression = undefined,
 
         pub fn string(self: @This(), allocator: std.mem.Allocator) ![]const u8 {
             return std.fmt.allocPrint(allocator, "{s} {!s}", .{ self.token.literal, self.return_value.string(allocator) });
@@ -27,7 +27,7 @@ pub const Statement = union(StatementTypes) {
     },
     EXPRESSION: struct {
         token: tokens.Token,
-        expression: Expression = Expression{},
+        expression: Expression = undefined,
 
         pub fn string(self: @This(), allocator: std.mem.Allocator) ![]const u8 {
             return std.fmt.allocPrint(allocator, "{!s}", .{self.expression.string(allocator)});
@@ -42,10 +42,60 @@ pub const Statement = union(StatementTypes) {
     }
 };
 
-pub const Expression = struct {
-    pub fn string(self: Expression, allocator: std.mem.Allocator) ![]const u8 {
-        _ = self;
-        return std.fmt.allocPrint(allocator, "{s}", .{"expression_pending"});
+pub const ExpressionTypes = enum { IDENTIFIER, INTEGERLITERAL, PREFIX };
+
+pub const Expression = union(ExpressionTypes) {
+    IDENTIFIER: Identifier,
+    INTEGERLITERAL: IntegerLiteral,
+    PREFIX: PrefixExpression,
+
+    pub fn string(self: @This(), allocator: std.mem.Allocator) ![]const u8 {
+        switch (self) {
+            .IDENTIFIER => |ident| return ident.string(),
+            .INTEGERLITERAL => |il| return il.string(allocator),
+            .PREFIX => |p| return p.string(allocator),
+        }
+    }
+};
+
+pub const PrefixOperators = enum {
+    BANG,
+    MINUS,
+
+    pub fn string(self: PrefixOperators) []const u8 {
+        switch (self) {
+            self.BANG => {
+                return "!";
+            },
+            self.MINUS => {
+                return "-";
+            },
+        }
+    }
+};
+
+pub const prefixOperatorsMap = std.ComptimeStringMap(PrefixOperators, .{
+    .{ "!", .BANG },
+    .{ "-", .MINUS },
+});
+
+pub const PrefixExpression = struct {
+    token: tokens.Token,
+    operator: PrefixOperators,
+    right: Expression,
+
+    pub fn string(self: PrefixExpression, allocator: std.mem.Allocator) ![]const u8 {
+        return std.fmt.allocPrint(allocator, "({s}{!s})", .{ self.operator.string(), self.right.string() });
+    }
+};
+
+// IntegerLiteral
+pub const IntegerLiteral = struct {
+    token: tokens.Token,
+    value: ?u64,
+
+    pub fn string(self: IntegerLiteral, allocator: std.mem.Allocator) ![]const u8 {
+        return std.fmt.allocPrint(allocator, "{?d}", .{self.value});
     }
 };
 

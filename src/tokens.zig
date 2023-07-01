@@ -41,16 +41,6 @@ pub const Token = struct {
     type: TokenType,
     literal: []const u8,
 
-    const keywordMap = std.ComptimeStringMap(TokenType, .{
-        .{ "fn", .FUNCTION },
-        .{ "let", .LET },
-        .{ "true", .TRUE },
-        .{ "false", .FALSE },
-        .{ "if", .IF },
-        .{ "else", .ELSE },
-        .{ "return", .RETURN },
-    });
-
     pub fn New(token_type: TokenType, literal: []const u8) Token {
         return Token{
             .type = token_type,
