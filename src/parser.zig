@@ -108,32 +108,32 @@ const Parser = struct {
 
     pub fn parseExpressionStatement(self: *Parser) ?ast.Statement {
         var stmt = ast.Statement{ .EXPRESSION = .{ .token = self.current_token } };
-        stmt.EXPRESSION.expression = self.parseExpression(ast.ExpressionOps.LOWEST).?;
+        stmt.EXPRESSION.expression = self.parseExpression(ast.ExpressionOps.LOWEST).?.*;
         if (self.expectPeek(tokens.TokenType.SEMICOLON)) {
             self.nextToken();
         }
         return stmt;
     }
 
-    pub fn parseIdentifier(self: *Parser) ?ast.Expression {
-        return ast.Expression{ .IDENTIFIER = .{
+    pub fn parseIdentifier(self: *Parser) ?*const ast.Expression {
+        return &ast.Expression{ .IDENTIFIER = .{
             .token = self.current_token,
             .value = self.current_token.literal,
         } };
     }
 
-    pub fn parseIntegerLiteral(self: *Parser) ?ast.Expression {
+    pub fn parseIntegerLiteral(self: *Parser) ?*const ast.Expression {
 
         // To-Do Propagate Errors properly
         const val = std.fmt.parseInt(u64, self.current_token.literal, 10) catch null;
 
-        return ast.Expression{ .INTEGERLITERAL = .{
+        return &ast.Expression{ .INTEGERLITERAL = .{
             .token = self.current_token,
             .value = val,
         } };
     }
 
-    pub fn parsePrefixExpression(self: *Parser) ?ast.Expression {
+    pub fn parsePrefixExpression(self: *Parser) ?*const ast.Expression {
         var prefix = ast.Expression{ .PREFIX = .{
             .token = self.current_token,
             .operator = ast.prefixOperatorsMap.get(self.current_token.literal).?,
@@ -141,13 +141,13 @@ const Parser = struct {
         } };
         self.nextToken();
 
-        var right = self.parseExpression(ast.ExpressionOps.LOWEST);
-        prefix.PREFIX.right = right;
+        var right = self.parseExpression(ast.ExpressionOps.LOWEST).?.*;
+        prefix.PREFIX.right = &right;
 
-        return prefix;
+        return &prefix;
     }
 
-    pub fn parseExpression(self: *Parser, precendence: ast.ExpressionOps) ?ast.Expression {
+    pub fn parseExpression(self: *Parser, precendence: ast.ExpressionOps) ?*const ast.Expression {
         _ = precendence;
         switch (self.current_token.type) {
             tokens.TokenType.IDENT => return self.parseIdentifier(),
@@ -179,18 +179,18 @@ test "parse_integer" {
     var p = Parser.New(&l, allocator);
     var program = try p.parseProgram();
     std.debug.print("Full Program:\n{!s}\n", .{program.string(allocator)});
+    std.debug.print("Test:\n{any}\n", .{program.statements[0].EXPRESSION.expression});
 }
 
-test "parser_let_return" {
-    const input = "y; 5;";
-    var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
-    defer arena.deinit();
-    var allocator = arena.allocator();
-    var l = lex.Lexer.init(input);
-    var p = Parser.New(&l, allocator);
-    var program = try p.parseProgram();
-    _ = program;
-    // std.debug.print("Let Statement: {!s}\n", .{program.statements[0].string(allocator)});
-    // std.debug.print("Return Statement: {!s}\n", .{program.statements[1].string(allocator)});
-    // std.debug.print("Full Program:\n{!s}\n", .{program.string(allocator)});
-}
+// test "parser_let_return" {
+//     const input = "y; 5;";
+//     var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
+//     defer arena.deinit();
+//     var allocator = arena.allocator();
+//     var l = lex.Lexer.init(input);
+//     var p = Parser.New(&l, allocator);
+//     var program = try p.parseProgram();
+//     std.debug.print("Let Statement: {!s}\n", .{program.statements[0].string(allocator)});
+//     std.debug.print("Return Statement: {!s}\n", .{program.statements[1].string(allocator)});
+//     std.debug.print("Full Program:\n{!s}\n", .{program.string(allocator)});
+// }

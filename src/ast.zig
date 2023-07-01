@@ -62,12 +62,12 @@ pub const PrefixOperators = enum {
     BANG,
     MINUS,
 
-    pub fn string(self: PrefixOperators) []const u8 {
+    pub fn string(self: @This()) []const u8 {
         switch (self) {
-            self.BANG => {
+            PrefixOperators.BANG => {
                 return "!";
             },
-            self.MINUS => {
+            PrefixOperators.MINUS => {
                 return "-";
             },
         }
@@ -82,10 +82,10 @@ pub const prefixOperatorsMap = std.ComptimeStringMap(PrefixOperators, .{
 pub const PrefixExpression = struct {
     token: tokens.Token,
     operator: PrefixOperators,
-    right: Expression,
+    right: *Expression,
 
     pub fn string(self: PrefixExpression, allocator: std.mem.Allocator) ![]const u8 {
-        return std.fmt.allocPrint(allocator, "({s}{!s})", .{ self.operator.string(), self.right.string() });
+        return std.fmt.allocPrint(allocator, "({s}{!s})", .{ self.operator.string(), self.right.string(allocator) });
     }
 };
 
